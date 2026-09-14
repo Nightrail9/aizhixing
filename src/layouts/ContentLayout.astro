@@ -1,34 +1,248 @@
 ---
-import { CalendarDays, Clock3, Eye, Home, UserRound } from 'lucide-astro';
+import { Bookmark, CalendarDays, Clock3, Eye, Home } from 'lucide-astro';
 import BaseLayout from './BaseLayout.astro';
 import ReadingProgress from '../components/ReadingProgress.astro';
 import ShareButton from '../components/ShareButton.astro';
 import Giscus from '../components/Giscus.astro';
-interface Heading { depth: number; slug: string; text: string }
-interface Props { title: string; description: string; publishedAt: string; headings: Heading[]; tags?: string[]; duration?: number; views?: number; showComments?: boolean; contentType?: string; category?: string }
-const { title, description, publishedAt, headings, tags = [], duration, views, showComments = true, contentType = '文章', category } = Astro.props;
+
+interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+
+interface Props {
+  title: string;
+  description: string;
+  publishedAt: string;
+  headings: Heading[];
+  tags?: string[];
+  duration?: number;
+  views?: number;
+  showComments?: boolean;
+  contentType?: string;
+  category?: string;
+}
+
+const {
+  title,
+  description,
+  publishedAt,
+  headings,
+  tags = [],
+  duration,
+  views,
+  showComments = true,
+  contentType = '文章',
+  category,
+} = Astro.props;
+
 const base = import.meta.env.BASE_URL;
 const toc = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
 ---
+
 <BaseLayout title={title} description={description}>
   <ReadingProgress />
   <div class="container detail-shell">
     <article class="detail-main" data-pagefind-body>
-      <span class="sr-only" data-pagefind-filter={`type:${contentType}`}>{contentType}</span>{category && <span class="sr-only" data-pagefind-filter={`category:${category}`}>{category}</span>}
-      <nav class="breadcrumbs" aria-label="面包屑" data-pagefind-ignore><a href={base}><Home size={13} />首页</a><span>/</span><a href={`${base}articles/`}>文章</a>{category && <><span>/</span><span>{category}</span></>}</nav>
-      {category && <span class="pill">{category}</span>}
-      <h1 data-pagefind-meta="title">{title}</h1><p class="detail-lead" data-pagefind-meta="description">{description}</p>
-      <div class="meta" data-pagefind-ignore><span><UserRound size={15} />Nightrail9</span><span><CalendarDays size={15} />{publishedAt}</span>{duration && <span><Clock3 size={15} />约 {duration} 分钟阅读</span>}{views !== undefined && <span><Eye size={15} />{views.toLocaleString()} 阅读</span>}</div>
-      <div class="tag-row detail-tags">{tags.map((tag) => <span class="pill" data-pagefind-filter={`tag:${tag}`}>{tag}</span>)}</div>
-      <div class="detail-actions" data-pagefind-ignore><ShareButton /></div>
-      {toc.length > 0 && <details class="mobile-toc surface" data-pagefind-ignore><summary>文章目录</summary><ol>{toc.map((heading) => <li><a href={`#${heading.slug}`}>{heading.text}</a></li>)}</ol></details>}
-      <div class="prose"><slot /></div>
+      <span class="sr-only" data-pagefind-filter={`type:${contentType}`}>{contentType}</span>
+      {category && <span class="sr-only" data-pagefind-filter={`category:${category}`}>{category}</span>}
+
+      <nav class="breadcrumbs" aria-label="面包屑" data-pagefind-ignore>
+        <a href={base}><Home size={14} />首页</a>
+        <span>/</span>
+        <a href={`${base}articles/`}>文章</a>
+        {category && (
+          <>
+            <span>/</span>
+            <span>{category}</span>
+          </>
+        )}
+      </nav>
+
+      {category && <span class="pill category-badge">{category}</span>}
+
+      <h1 data-pagefind-meta="title">{title}</h1>
+      <p class="detail-lead" data-pagefind-meta="description">{description}</p>
+
+      <!-- Author and Meta Bar -->
+      <div class="author-meta-bar" data-pagefind-ignore>
+        <div class="author-info">
+          <div class="author-avatar">林</div>
+          <span class="author-name">林知行</span>
+          <span class="meta-dot">·</span>
+          <span class="meta-item"><CalendarDays size={14} />{publishedAt}</span>
+          {duration && (
+            <>
+              <span class="meta-dot">·</span>
+              <span class="meta-item"><Clock3 size={14} />约 {duration} 分钟阅读</span>
+            </>
+          )}
+          {views !== undefined && (
+            <>
+              <span class="meta-dot">·</span>
+              <span class="meta-item"><Eye size={14} />{views.toLocaleString()} 阅读</span>
+            </>
+          )}
+        </div>
+
+        <div class="detail-actions">
+          <button class="btn btn-action bookmark-btn" type="button" data-bookmark-btn aria-label="收藏文章">
+            <Bookmark size={16} />
+            <span>收藏</span>
+          </button>
+          <ShareButton />
+        </div>
+      </div>
+
+      <div class="tag-row detail-tags" data-pagefind-ignore>
+        {tags.map((tag) => (
+          <span class="pill" data-pagefind-filter={`tag:${tag}`}>{tag}</span>
+        ))}
+      </div>
+
+      {toc.length > 0 && (
+        <details class="mobile-toc surface" data-pagefind-ignore>
+          <summary>文章目录</summary>
+          <ol>
+            {toc.map((heading) => (
+              <li><a href={`#${heading.slug}`}>{heading.text}</a></li>
+            ))}
+          </ol>
+        </details>
+      )}
+
+      <!-- Slot for Cover Image and Markdown Body -->
+      <slot />
+
       {showComments && <Giscus />}
     </article>
+
+    <!-- Desktop TOC Panel -->
     <aside class="toc-panel" aria-label="文章目录">
-      <div class="reading-widget"><header><span>阅读进度</span><strong data-reading-label>0%</strong></header><div><span data-reading-track></span></div></div>
-      <h2>文章目录</h2><ol>{toc.map((heading) => <li style={`padding-left:${(heading.depth - 2) * .75}rem`}><a href={`#${heading.slug}`}>{heading.text}</a></li>)}</ol>
+      <div class="reading-widget">
+        <header>
+          <span>阅读进度</span>
+          <strong data-reading-label>0%</strong>
+        </header>
+        <div>
+          <span data-reading-track></span>
+        </div>
+      </div>
+      <h2>文章目录</h2>
+      <ol class="toc-list">
+        {toc.map((heading) => (
+          <li style={`padding-left:${(heading.depth - 2) * 0.75}rem`}>
+            <a href={`#${heading.slug}`} data-toc-link={heading.slug}>{heading.text}</a>
+          </li>
+        ))}
+      </ol>
     </aside>
   </div>
 </BaseLayout>
-<style>.breadcrumbs a { display: inline-flex; align-items: center; gap: .25rem; }.detail-tags { margin-top: .65rem; }</style>
+
+<script>
+  // Bookmark button toggle
+  const bookmarkBtn = document.querySelector<HTMLButtonElement>('[data-bookmark-btn]');
+  if (bookmarkBtn) {
+    const pageId = window.location.pathname;
+    const isSaved = localStorage.getItem(`aizhixing:bookmark:${pageId}`) === 'true';
+    if (isSaved) {
+      bookmarkBtn.classList.add('active');
+      bookmarkBtn.querySelector('span')!.textContent = '已收藏';
+    }
+    bookmarkBtn.addEventListener('click', () => {
+      const nowSaved = bookmarkBtn.classList.toggle('active');
+      localStorage.setItem(`aizhixing:bookmark:${pageId}`, String(nowSaved));
+      bookmarkBtn.querySelector('span')!.textContent = nowSaved ? '已收藏' : '收藏';
+    });
+  }
+
+  // Active TOC heading scroll spy
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const id = entry.target.getAttribute('id');
+          document.querySelectorAll('[data-toc-link]').forEach((link) => {
+            link.classList.toggle('active', link.getAttribute('data-toc-link') === id);
+          });
+        }
+      });
+    },
+    { rootMargin: '-80px 0% -60% 0%' }
+  );
+
+  document.querySelectorAll('article h2[id], article h3[id]').forEach((heading) => {
+    observer.observe(heading);
+  });
+</script>
+
+<style>
+  .category-badge {
+    margin-bottom: .6rem;
+  }
+  .author-meta-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 1.15rem;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 1rem;
+  }
+  .author-info {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .55rem;
+    color: var(--muted);
+    font-size: .84rem;
+  }
+  .author-avatar {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    background: var(--brand-soft);
+    color: var(--brand);
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    font-size: .84rem;
+  }
+  .author-name {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .meta-dot { color: var(--line); }
+  .meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+  }
+  .detail-actions {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+  }
+  .btn-action {
+    min-height: 2.25rem;
+    padding: .35rem .85rem;
+    font-size: .82rem;
+    border-radius: .55rem;
+  }
+  .bookmark-btn.active {
+    color: var(--brand);
+    background: var(--brand-soft);
+    border-color: var(--brand-soft-border);
+  }
+  .detail-tags {
+    margin-bottom: 1.25rem;
+  }
+  .breadcrumbs a {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+  }
+</style>

@@ -10,23 +10,96 @@ import { imageFor } from '../../lib/images';
 const base = import.meta.env.BASE_URL;
 const resources = (await getCollection('resources')).filter(publicOnly).sort(byDateDesc);
 const kindLabel = { paper: '论文文献', project: '开源项目', tool: 'AI 工具' } as const;
-const categories = (['paper', 'project', 'tool'] as const).map((value) => ({ label: kindLabel[value], value, count: resources.filter((entry) => entry.data.kind === value).length }));
-const tags = [...new Set(resources.flatMap((entry) => entry.data.tags))].map((value) => ({ label: value, value, count: resources.filter((entry) => entry.data.tags.includes(value)).length })).sort((a, b) => b.count - a.count || a.label.localeCompare(b.label, 'zh-CN')).slice(0, 12);
-const years = [...new Set(resources.map((entry) => String(entry.data.publishedAt.getFullYear())))].sort((a, b) => Number(b) - Number(a)).map((value) => ({ label: `${value} 年`, value, count: resources.filter((entry) => String(entry.data.publishedAt.getFullYear()) === value).length }));
-const groups = [{ id: 'category' as const, title: '分类导航', allLabel: '全部资源', items: categories }, { id: 'tag' as const, title: '标签', allLabel: '全部标签', items: tags }, { id: 'year' as const, title: '年份归档', allLabel: '全部年份', items: years }];
-const extra = (entry: (typeof resources)[number]) => entry.data.kind === 'paper' ? `${entry.data.authors[0]} 等` : entry.data.kind === 'project' ? `${entry.data.language} · ${entry.data.stars ?? '开源'}` : entry.data.platforms.join(' / ');
+
+const categories = (['paper', 'project', 'tool'] as const).map((value) => ({
+  label: kindLabel[value],
+  value,
+  count: resources.filter((entry) => entry.data.kind === value).length,
+}));
+
+const tags = [...new Set(resources.flatMap((entry) => entry.data.tags))]
+  .map((value) => ({
+    label: value,
+    value,
+    count: resources.filter((entry) => entry.data.tags.includes(value)).length,
+  }))
+  .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label, 'zh-CN'));
+
+const years = [...new Set(resources.map((entry) => String(entry.data.publishedAt.getFullYear())))]
+  .sort((a, b) => Number(b) - Number(a))
+  .map((value) => ({
+    label: `${value} 年`,
+    value,
+    count: resources.filter((entry) => String(entry.data.publishedAt.getFullYear()) === value).length,
+  }));
+
+const groups = [
+  { id: 'category' as const, title: '分类导航', allLabel: '全部资源', items: categories },
+  { id: 'tag' as const, title: '标签', allLabel: '全部标签', items: tags },
+  { id: 'year' as const, title: '年份归档', allLabel: '全部年份', items: years },
+];
+
+const extra = (entry: (typeof resources)[number]) =>
+  entry.data.kind === 'paper'
+    ? `${entry.data.authors[0]} 等`
+    : entry.data.kind === 'project'
+      ? `${entry.data.language} · ⭐ ${entry.data.stars ?? '开源'}`
+      : entry.data.platforms.join(' / ');
 ---
+
 <BaseLayout title="资源" description="精选 AI 论文、开源项目与实用工具。">
   <div class="container listing-shell">
     <ListingFilters groups={groups} />
     <div class="listing-main">
-      <SectionHero title="资源" description="精选优质的 AI 学习资源，收录论文文献、开源项目和 AI 工具，帮助你构建系统的知识体系。" quote={'好的资源，\n让学习的路走得更远。'} />
-      <div class="listing-toolbar surface"><div class="sort-group"><span>排序：</span><button class="sort-button" data-sort-mode="latest" aria-pressed="true">最新收录</button><button class="sort-button" data-sort-mode="featured" aria-pressed="false">精选推荐</button></div><span class="listing-total">共 {resources.length} 条资源</span></div>
-      <div class="listing-cards">
-        {resources.map((entry) => <ContentCard href={resourceHref(entry, base)} title={entry.data.title} description={entry.data.description} image={imageFor(entry.data.cover)} alt={entry.data.coverAlt} date={formatDate(entry.data.publishedAt)} dateValue={entry.data.publishedAt.valueOf()} year={String(entry.data.publishedAt.getFullYear())} category={entry.data.kind} popularity={0} tags={entry.data.tags} badge={kindLabel[entry.data.kind]} featured={entry.data.featured} extraMeta={extra(entry)} />)}
+      <SectionHero
+        title="资源"
+        subtitle="精选优质的 AI 学习资源，收录论文文献、开源项目和 AI 工具"
+        description="系统收录前沿学术论文、工业级开源项目与生产力 AI 工具，帮助你构建系统的知识体系，提升技术实践能力。"
+        quote={'好的资源，\n让学习的路走得更远。'}
+      />
+
+      <div class="listing-toolbar surface">
+        <div class="sort-group">
+          <span>排序：</span>
+          <button class="sort-button" data-sort-mode="latest" aria-pressed="true">最新发布</button>
+          <button class="sort-button" data-sort-mode="featured" aria-pressed="false">最多浏览</button>
+        </div>
+        <span class="listing-total">共 {resources.length} 条精选资源</span>
       </div>
-      <div class="listing-empty surface" data-listing-empty hidden><h2>没有匹配资源</h2><p class="muted">请调整分类、标签或年份筛选。</p></div>
-      <nav class="listing-pagination" data-pagination hidden aria-label="分页"><button class="btn" data-page-prev>上一页</button><span data-page-label></span><button class="btn" data-page-next>下一页</button></nav>
+
+      <div class="listing-cards">
+        {resources.map((entry) => (
+          <ContentCard
+            href={resourceHref(entry, base)}
+            title={entry.data.title}
+            description={entry.data.description}
+            image={imageFor(entry.data.cover)}
+            alt={entry.data.coverAlt}
+            date={formatDate(entry.data.publishedAt)}
+            dateValue={entry.data.publishedAt.valueOf()}
+            year={String(entry.data.publishedAt.getFullYear())}
+            category={entry.data.kind}
+            popularity={entry.data.featured ? 100 : 30}
+            tags={entry.data.tags}
+            badge={kindLabel[entry.data.kind]}
+            featured={entry.data.featured}
+            extraMeta={extra(entry)}
+          />
+        ))}
+      </div>
+
+      <div class="listing-empty surface" data-listing-empty hidden>
+        <h2>没有匹配资源</h2>
+        <p class="muted">请调整分类、标签或年份筛选。</p>
+      </div>
+
+      <nav class="listing-pagination" data-pagination hidden aria-label="分页">
+        <button class="btn" data-page-prev>← 上一页</button>
+        <div class="page-numbers">
+          <span class="page-btn active">1</span>
+        </div>
+        <button class="btn" data-page-next>下一页 →</button>
+      </nav>
     </div>
   </div>
 </BaseLayout>

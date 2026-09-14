@@ -1,21 +1,123 @@
 ---
 import Picture from './ResponsiveImage.astro';
 import banner from '../assets/images/banner-sections.png';
-interface Props { title: string; description: string; quote?: string }
-const { title, description, quote = '持续学习，\n让 AI 帮我们看见更大的世界。' } = Astro.props;
+
+interface Props {
+  title: string;
+  subtitle?: string;
+  description: string;
+  quote?: string;
+}
+
+const { title, subtitle, description, quote = '持续学习，\n让 AI 帮我们看见更大的世界。' } = Astro.props;
 ---
-<section class="section-hero">
+
+<section class="section-hero surface">
   <Picture src={banner} alt="蓝色雪山与湖泊" formats={['avif','webp']} widths={[720,1200,1800]} sizes="(max-width: 1100px) 100vw, 1120px" loading="eager" />
-  <div class="section-veil"></div><div class="section-copy"><h1>{title}</h1><p>{description}</p></div><p class="hand-note">{quote}</p>
+  <div class="section-veil"></div>
+  <div class="section-copy">
+    <h1>{title}</h1>
+    {subtitle && <p class="section-subtitle">{subtitle}</p>}
+    <p class="section-desc">{description}</p>
+  </div>
+  <p class="hand-note">{quote}</p>
 </section>
+
 <style>
-  .section-hero { position: relative; min-height: 10.2rem; overflow: hidden; display: flex; align-items: center; padding: 1.4rem 1.5rem; border: 1px solid var(--line); border-radius: .7rem .7rem 0 0; background: var(--surface-solid); }
-  .section-hero :global(picture), .section-hero :global(img) { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .section-hero :global(img) { object-fit: cover; }
-  .section-veil { position: absolute; inset: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--surface-solid) 98%, transparent) 0%, color-mix(in srgb, var(--surface-solid) 88%, transparent) 38%, rgba(255,255,255,.08) 72%); }
-  .section-copy { position: relative; z-index: 1; max-width: 38rem; }
-  .section-copy h1 { margin: 0 0 .3rem; font-size: clamp(2.2rem, 3.5vw, 3rem); line-height: 1; letter-spacing: -.045em; }
-  .section-copy p { max-width: 34rem; margin: 0; color: var(--muted); font-weight: 650; line-height: 1.65; }
-  .hand-note { position: absolute; z-index: 2; right: 8%; top: 16%; max-width: 18rem; margin: 0; color: #0b59d8; white-space: pre-line; transform: rotate(-7deg); font-family: 'KaiTi', 'STKaiti', cursive; font-size: 1.05rem; line-height: 1.8; }
-  @media (max-width: 760px) { .section-hero { min-height: 11.5rem; padding: 1.1rem; border-radius: .7rem; } .section-veil { background: color-mix(in srgb, var(--surface-solid) 84%, transparent); } .section-copy h1 { font-size: 2.25rem; } .section-copy p { font-size: .86rem; } .hand-note { display: none; } }
+  .section-hero {
+    position: relative;
+    min-height: 11.5rem;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    padding: 1.8rem 2.2rem;
+    border-radius: 1rem;
+    border: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .section-hero :global(picture), .section-hero :global(img) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .section-hero :global(img) {
+    object-fit: cover;
+    object-position: right center;
+  }
+  .section-veil {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg,
+      color-mix(in srgb, var(--surface) 98%, transparent) 0%,
+      color-mix(in srgb, var(--surface) 92%, transparent) 42%,
+      rgba(255, 255, 255, 0.08) 75%
+    );
+  }
+  .dark .section-veil {
+    background: linear-gradient(90deg,
+      color-mix(in srgb, var(--surface) 98%, transparent) 0%,
+      color-mix(in srgb, var(--surface) 90%, transparent) 45%,
+      rgba(15, 23, 42, 0.15) 75%
+    );
+  }
+  .section-copy {
+    position: relative;
+    z-index: 2;
+    max-width: 44rem;
+  }
+  .section-copy h1 {
+    margin: 0 0 .4rem;
+    font-size: clamp(2rem, 3.5vw, 2.75rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -.035em;
+    color: var(--text);
+  }
+  .section-subtitle {
+    margin: 0 0 .5rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.45;
+  }
+  .section-desc {
+    max-width: 38rem;
+    margin: 0;
+    color: var(--muted);
+    font-size: .88rem;
+    line-height: 1.65;
+  }
+  .hand-note {
+    position: absolute;
+    z-index: 2;
+    right: 5%;
+    top: 20%;
+    max-width: 18rem;
+    margin: 0;
+    color: #0b59d8;
+    white-space: pre-line;
+    transform: rotate(-6deg);
+    font-family: 'KaiTi', 'STKaiti', cursive;
+    font-size: 1.12rem;
+    line-height: 1.75;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+  }
+  .dark .hand-note {
+    color: #60a5fa;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  }
+
+  @media (max-width: 900px) {
+    .hand-note { display: none; }
+  }
+  @media (max-width: 768px) {
+    .section-hero {
+      min-height: 10.5rem;
+      padding: 1.25rem 1.25rem;
+    }
+    .section-copy h1 { font-size: 2rem; }
+    .section-subtitle { font-size: .95rem; }
+    .section-desc { font-size: .84rem; }
+  }
 </style>

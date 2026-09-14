@@ -2,15 +2,78 @@
 import Picture from './ResponsiveImage.astro';
 import { ArrowRight, CalendarDays, Eye } from 'lucide-astro';
 import type { ImageMetadata } from 'astro';
-interface Props { href: string; title: string; description: string; image: ImageMetadata; alt: string; date?: string; dateValue: number; year: string; category: string; views?: number | string; popularity?: number; tags?: string[]; badge?: string; featured?: boolean; extraMeta?: string }
-const { href, title, description, image, alt, date, dateValue, year, category, views, popularity = 0, tags = [], badge, featured = false, extraMeta } = Astro.props;
+
+interface Props {
+  href: string;
+  title: string;
+  description: string;
+  image: ImageMetadata;
+  alt: string;
+  date?: string;
+  dateValue: number;
+  year: string;
+  category: string;
+  views?: number | string;
+  popularity?: number;
+  tags?: string[];
+  badge?: string;
+  featured?: boolean;
+  extraMeta?: string;
+}
+
+const {
+  href,
+  title,
+  description,
+  image,
+  alt,
+  date,
+  dateValue,
+  year,
+  category,
+  views,
+  popularity = 0,
+  tags = [],
+  badge,
+  featured = false,
+  extraMeta,
+} = Astro.props;
 ---
-<article class="content-card surface" data-category={category} data-tags={tags.join('|')} data-year={year} data-date={dateValue} data-popularity={popularity} data-featured={featured ? 1 : 0}>
-  <a class="card-image" href={href} tabindex="-1"><Picture src={image} alt={alt} formats={['avif','webp']} widths={[240,420,720]} sizes="(max-width: 640px) 100vw, (max-width: 1100px) 50vw, 33vw" /></a>
+
+<article
+  class:list={['content-card', { 'is-leading': featured }]}
+  data-category={category}
+  data-tags={tags.join('|')}
+  data-year={year}
+  data-date={dateValue}
+  data-popularity={popularity}
+  data-featured={featured ? 1 : 0}
+>
+  <a class="card-image" href={href} tabindex="-1">
+    <Picture
+      src={image}
+      alt={alt}
+      formats={['avif', 'webp']}
+      widths={[320, 520, 800]}
+      sizes={featured ? '(max-width: 768px) 100vw, 42vw' : '(max-width: 640px) 100vw, (max-width: 1100px) 50vw, 33vw'}
+    />
+    {badge && <span class="card-badge">{badge}</span>}
+  </a>
   <div class="card-body">
-    {badge && <span class="pill card-badge">{badge}</span>}
-    <h3><a href={href}>{title}</a></h3><p>{description}</p>
-    <div class="meta">{date && <span><CalendarDays size={13} />{date}</span>}{views && <span><Eye size={13} />{views}</span>}{extraMeta && <span>{extraMeta}</span>}</div>
-    <div class="card-bottom"><div class="tag-row">{tags.slice(0, 3).map((tag) => <span class="pill">{tag}</span>)}</div><a class="card-arrow" href={href} aria-label={`阅读${title}`}><ArrowRight size={16} /></a></div>
+    <h3><a href={href}>{title}</a></h3>
+    <p>{description}</p>
+    <div class="meta">
+      {date && <span><CalendarDays size={14} />{date}</span>}
+      {views && <span><Eye size={14} />{views}</span>}
+      {extraMeta && <span>{extraMeta}</span>}
+    </div>
+    <div class="card-bottom">
+      <div class="tag-row">
+        {tags.slice(0, 4).map((tag) => <span class="pill">{tag}</span>)}
+      </div>
+      <a class="card-arrow" href={href} aria-label={`阅读 ${title}`}>
+        <ArrowRight size={16} />
+      </a>
+    </div>
   </div>
 </article>

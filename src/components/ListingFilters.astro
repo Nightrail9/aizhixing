@@ -1,30 +1,150 @@
 ---
-import { CalendarDays, LayoutGrid, Tags } from 'lucide-astro';
+import {
+  BookOpen,
+  Bot,
+  CalendarDays,
+  ChevronRight,
+  Cloud,
+  Code2,
+  Cpu,
+  Database,
+  FileText,
+  GitFork,
+  LayoutGrid,
+  Lightbulb,
+  MessageSquare,
+  Package,
+  Tags,
+  Wrench,
+} from 'lucide-astro';
 
-interface Item { label: string; value: string; count: number }
-interface Group { id: 'category' | 'tag' | 'year'; title: string; allLabel: string; items: Item[] }
+interface Item {
+  label: string;
+  value: string;
+  count: number;
+}
+
+interface Group {
+  id: 'category' | 'tag' | 'year';
+  title: string;
+  allLabel: string;
+  items: Item[];
+}
+
 const { groups } = Astro.props as { groups: Group[] };
-const icons = { category: LayoutGrid, tag: Tags, year: CalendarDays };
+
+const groupIcons = {
+  category: LayoutGrid,
+  tag: Tags,
+  year: CalendarDays,
+};
+
+// Map specific category names to matching icons
+const getCategoryIcon = (label: string) => {
+  if (label.includes('思考')) return Lightbulb;
+  if (label.includes('解析') || label.includes('基础开发')) return Code2;
+  if (label.includes('学习') || label.includes('方法')) return BookOpen;
+  if (label.includes('实践') || label.includes('工程部署')) return Wrench;
+  if (label.includes('工具') || label.includes('AI 工具')) return Package;
+  if (label.includes('模型') || label.includes('原理')) return Cpu;
+  if (label.includes('Prompt') || label.includes('提示词')) return MessageSquare;
+  if (label.includes('RAG') || label.includes('检索')) return Database;
+  if (label.includes('Agent') || label.includes('智能体')) return Bot;
+  if (label.includes('论文') || label.includes('文献')) return FileText;
+  if (label.includes('开源') || label.includes('项目')) return GitFork;
+  if (label.includes('云') || label.includes('部署')) return Cloud;
+  return LayoutGrid;
+};
 ---
 
 <aside class="filter-sidebar" aria-label="内容筛选">
   {groups.map((group) => {
-    const Icon = icons[group.id];
+    const GroupIcon = groupIcons[group.id];
     const total = group.id === 'category' ? group.items.reduce((sum, item) => sum + item.count, 0) : undefined;
-    return <section class="filter-panel surface">
-      <h2><Icon size={18} />{group.title}</h2>
-      <div class:list={['filter-list', { 'filter-tags': group.id === 'tag' }]}>
-        <button class="filter-button" data-filter-group={group.id} data-filter-value="all" aria-pressed="true"><span>{group.allLabel}</span>{total !== undefined && <small>{total}</small>}</button>
-        {group.items.map((item) => <button class="filter-button" data-filter-group={group.id} data-filter-value={item.value} aria-pressed="false"><span>{item.label}</span><small>{item.count}</small></button>)}
-      </div>
-    </section>;
+    
+    return (
+      <section class="filter-card surface">
+        <h2 class="filter-title">
+          <GroupIcon size={18} class="filter-title-icon" />
+          {group.title}
+        </h2>
+
+        {group.id === 'category' && (
+          <div class="category-list">
+            <button class="category-item" data-filter-group="category" data-filter-value="all" aria-pressed="true">
+              <span class="category-info">
+                <LayoutGrid size={16} />
+                <span>{group.allLabel}</span>
+              </span>
+              {total !== undefined && <span class="badge">{total}</span>}
+            </button>
+            {group.items.map((item) => {
+              const ItemIcon = getCategoryIcon(item.label);
+              return (
+                <button class="category-item" data-filter-group="category" data-filter-value={item.value} aria-pressed="false">
+                  <span class="category-info">
+                    <ItemIcon size={16} />
+                    <span>{item.label}</span>
+                  </span>
+                  <span class="badge">{item.count}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {group.id === 'tag' && (
+          <div class="tag-cloud">
+            <button class="tag-pill" data-filter-group="tag" data-filter-value="all" aria-pressed="true">
+              <span>{group.allLabel}</span>
+            </button>
+            {group.items.map((item) => (
+              <button class="tag-pill" data-filter-group="tag" data-filter-value={item.value} aria-pressed="false">
+                <span>{item.label}</span>
+                <small>{item.count}</small>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {group.id === 'year' && (
+          <div class="year-list">
+            <button class="year-item" data-filter-group="year" data-filter-value="all" aria-pressed="true">
+              <span>{group.allLabel}</span>
+              <ChevronRight size={15} />
+            </button>
+            {group.items.map((item) => (
+              <button class="year-item" data-filter-group="year" data-filter-value={item.value} aria-pressed="false">
+                <span>{item.label} <small>({item.count})</small></span>
+                <ChevronRight size={15} />
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
+    );
   })}
 </aside>
 
 <details class="mobile-filters surface">
-  <summary>筛选内容</summary>
+  <summary>筛选与分类</summary>
   <div class="mobile-filter-body">
-    {groups.map((group) => <fieldset><legend>{group.title}</legend><div class="filter-list filter-tags"><button class="filter-button" data-filter-group={group.id} data-filter-value="all" aria-pressed="true"><span>{group.allLabel}</span></button>{group.items.map((item) => <button class="filter-button" data-filter-group={group.id} data-filter-value={item.value} aria-pressed="false"><span>{item.label}</span><small>{item.count}</small></button>)}</div></fieldset>)}
+    {groups.map((group) => (
+      <fieldset>
+        <legend>{group.title}</legend>
+        <div class="tag-cloud">
+          <button class="tag-pill" data-filter-group={group.id} data-filter-value="all" aria-pressed="true">
+            <span>{group.allLabel}</span>
+          </button>
+          {group.items.map((item) => (
+            <button class="tag-pill" data-filter-group={group.id} data-filter-value={item.value} aria-pressed="false">
+              <span>{item.label}</span>
+              <small>{item.count}</small>
+            </button>
+          ))}
+        </div>
+      </fieldset>
+    ))}
   </div>
 </details>
 
@@ -40,61 +160,275 @@ const icons = { category: LayoutGrid, tag: Tags, year: CalendarDays };
 
     const matches = (card: HTMLElement) => {
       const tags = (card.dataset.tags || '').split('|');
-      return (state.category === 'all' || card.dataset.category === state.category)
-        && (state.tag === 'all' || tags.includes(state.tag))
-        && (state.year === 'all' || card.dataset.year === state.year);
+      return (
+        (state.category === 'all' || card.dataset.category === state.category) &&
+        (state.tag === 'all' || tags.includes(state.tag)) &&
+        (state.year === 'all' || card.dataset.year === state.year)
+      );
     };
+
     const compare = (a: HTMLElement, b: HTMLElement) => {
-      if (sortMode === 'popular') return Number(b.dataset.popularity || 0) - Number(a.dataset.popularity || 0) || Number(b.dataset.date || 0) - Number(a.dataset.date || 0);
-      if (sortMode === 'featured') return Number(b.dataset.featured || 0) - Number(a.dataset.featured || 0) || Number(b.dataset.date || 0) - Number(a.dataset.date || 0);
+      if (sortMode === 'popular') {
+        return (
+          Number(b.dataset.popularity || 0) - Number(a.dataset.popularity || 0) ||
+          Number(b.dataset.date || 0) - Number(a.dataset.date || 0)
+        );
+      }
+      if (sortMode === 'featured') {
+        return (
+          Number(b.dataset.featured || 0) - Number(a.dataset.featured || 0) ||
+          Number(b.dataset.date || 0) - Number(a.dataset.date || 0)
+        );
+      }
       return Number(b.dataset.date || 0) - Number(a.dataset.date || 0);
     };
+
     const render = () => {
       const visible = cards.filter(matches).sort(compare);
       visible.forEach((card) => container?.append(card));
       const pages = Math.ceil(visible.length / pageSize);
       page = Math.min(Math.max(1, page), Math.max(1, pages));
-      cards.forEach((card) => { card.hidden = true; card.classList.remove('is-leading'); });
-      visible.slice((page - 1) * pageSize, page * pageSize).forEach((card, index) => { card.hidden = false; card.classList.toggle('is-leading', index === 0); });
+      cards.forEach((card) => {
+        card.hidden = true;
+        card.classList.remove('is-leading');
+      });
+      visible.slice((page - 1) * pageSize, page * pageSize).forEach((card, index) => {
+        card.hidden = false;
+        card.classList.toggle('is-leading', index === 0);
+      });
       if (empty) empty.hidden = visible.length > 0;
+
       const pager = document.querySelector<HTMLElement>('[data-pagination]');
       if (pager) {
         pager.hidden = pages <= 1;
-        const label = pager.querySelector<HTMLElement>('[data-page-label]'); if (label) label.textContent = `${page} / ${pages}`;
+        const label = pager.querySelector<HTMLElement>('[data-page-label]');
+        if (label) label.textContent = `${page} / ${pages}`;
         pager.querySelector<HTMLButtonElement>('[data-page-prev]')!.disabled = page <= 1;
         pager.querySelector<HTMLButtonElement>('[data-page-next]')!.disabled = page >= pages;
       }
     };
-    document.querySelectorAll<HTMLButtonElement>('[data-filter-group]').forEach((button) => button.addEventListener('click', () => {
-      const group = button.dataset.filterGroup || 'category'; state[group] = button.dataset.filterValue || 'all'; page = 1;
-      document.querySelectorAll<HTMLButtonElement>(`[data-filter-group="${group}"]`).forEach((item) => item.setAttribute('aria-pressed', String(item.dataset.filterValue === state[group])));
+
+    document.querySelectorAll<HTMLButtonElement>('[data-filter-group]').forEach((button) =>
+      button.addEventListener('click', () => {
+        const group = button.dataset.filterGroup || 'category';
+        state[group] = button.dataset.filterValue || 'all';
+        page = 1;
+        document
+          .querySelectorAll<HTMLButtonElement>(`[data-filter-group="${group}"]`)
+          .forEach((item) => item.setAttribute('aria-pressed', String(item.dataset.filterValue === state[group])));
+        render();
+      })
+    );
+
+    document.querySelectorAll<HTMLButtonElement>('[data-sort-mode]').forEach((button) =>
+      button.addEventListener('click', () => {
+        sortMode = button.dataset.sortMode || 'latest';
+        page = 1;
+        document
+          .querySelectorAll<HTMLButtonElement>('[data-sort-mode]')
+          .forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
+        render();
+      })
+    );
+
+    document.querySelector<HTMLButtonElement>('[data-page-prev]')?.addEventListener('click', () => {
+      page -= 1;
       render();
-    }));
-    document.querySelectorAll<HTMLButtonElement>('[data-sort-mode]').forEach((button) => button.addEventListener('click', () => {
-      sortMode = button.dataset.sortMode || 'latest'; page = 1;
-      document.querySelectorAll<HTMLButtonElement>('[data-sort-mode]').forEach((item) => item.setAttribute('aria-pressed', String(item === button))); render();
-    }));
-    document.querySelector<HTMLButtonElement>('[data-page-prev]')?.addEventListener('click', () => { page -= 1; render(); });
-    document.querySelector<HTMLButtonElement>('[data-page-next]')?.addEventListener('click', () => { page += 1; render(); });
+    });
+    document.querySelector<HTMLButtonElement>('[data-page-next]')?.addEventListener('click', () => {
+      page += 1;
+      render();
+    });
+
     render();
   })();
 </script>
 
 <style>
-  .filter-sidebar { display: grid; align-self: start; gap: .8rem; position: sticky; top: 5.45rem; }
-  .filter-panel { padding: 1rem; }
-  .filter-panel h2 { display: flex; align-items: center; gap: .55rem; margin: 0 0 .7rem; font-size: 1rem; }
-  .filter-list { display: grid; gap: .18rem; }
-  .filter-button { width: 100%; min-height: 2.35rem; display: flex; align-items: center; justify-content: space-between; gap: .7rem; padding: .45rem .7rem; border: 0; border-radius: .55rem; background: transparent; color: var(--muted); text-align: left; font-size: .82rem; font-weight: 650; cursor: pointer; }
-  .filter-button:hover, .filter-button[aria-pressed='true'] { color: var(--brand); background: var(--brand-soft); }
-  .filter-button small { min-width: 1.7rem; padding: .05rem .4rem; border-radius: 99px; background: var(--page); text-align: center; }
-  .filter-tags { display: flex; flex-wrap: wrap; gap: .35rem; }
-  .filter-tags .filter-button { width: auto; min-height: 1.85rem; gap: .35rem; padding: .26rem .58rem; border-radius: 99px; background: var(--brand-soft); }
-  .filter-tags .filter-button:first-child { width: 100%; border-radius: .55rem; background: transparent; }
-  .mobile-filters { display: none; padding: .7rem .9rem; }
-  .mobile-filters summary { cursor: pointer; font-weight: 800; }
-  .mobile-filter-body { display: grid; gap: .8rem; margin-top: .7rem; }
-  .mobile-filter-body fieldset { margin: 0; padding: 0; border: 0; }
-  .mobile-filter-body legend { margin-bottom: .35rem; font-size: .78rem; font-weight: 800; }
-  @media (max-width: 1100px) { .filter-sidebar { display: none; } .mobile-filters { display: block; } }
+  .filter-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    position: sticky;
+    top: 5.6rem;
+  }
+  .filter-card {
+    padding: 1.25rem;
+    border-radius: 1rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+  }
+  .filter-title {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    margin: 0 0 1rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .filter-title-icon { color: var(--brand); }
+
+  /* Category List */
+  .category-list {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+  }
+  .category-item {
+    width: 100%;
+    min-height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    padding: .5rem .75rem;
+    border: 0;
+    border-radius: .65rem;
+    background: transparent;
+    color: var(--text);
+    font-size: .88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+  .category-info {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    color: var(--muted);
+  }
+  .category-item:hover {
+    background: var(--surface-soft);
+  }
+  .category-item:hover .category-info {
+    color: var(--text);
+  }
+  .category-item[aria-pressed='true'] {
+    color: var(--brand);
+    background: var(--brand-soft);
+  }
+  .category-item[aria-pressed='true'] .category-info {
+    color: var(--brand);
+    font-weight: 700;
+  }
+  .badge {
+    min-width: 1.8rem;
+    padding: .15rem .5rem;
+    border-radius: 999px;
+    background: var(--surface-soft);
+    color: var(--muted);
+    font-size: .75rem;
+    font-weight: 600;
+    text-align: center;
+  }
+  .category-item[aria-pressed='true'] .badge {
+    background: var(--brand);
+    color: #fff;
+  }
+
+  /* Tag Cloud */
+  .tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .45rem;
+  }
+  .tag-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .35rem .75rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--muted);
+    font-size: .8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+  .tag-pill small {
+    color: var(--muted);
+    font-size: .72rem;
+  }
+  .tag-pill:hover {
+    border-color: var(--brand-soft-border);
+    color: var(--text);
+    background: var(--surface-soft);
+  }
+  .tag-pill[aria-pressed='true'] {
+    border-color: var(--brand);
+    background: var(--brand);
+    color: #fff;
+  }
+  .tag-pill[aria-pressed='true'] small {
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  /* Year List */
+  .year-list {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+  }
+  .year-item {
+    width: 100%;
+    min-height: 2.35rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .45rem .75rem;
+    border: 0;
+    border-radius: .55rem;
+    background: transparent;
+    color: var(--text);
+    font-size: .86rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+  .year-item small { color: var(--muted); }
+  .year-item:hover {
+    background: var(--surface-soft);
+    color: var(--brand);
+  }
+  .year-item[aria-pressed='true'] {
+    color: var(--brand);
+    background: var(--brand-soft);
+    font-weight: 700;
+  }
+
+  /* Mobile */
+  .mobile-filters {
+    display: none;
+    padding: .85rem 1rem;
+    margin-bottom: 1rem;
+  }
+  .mobile-filters summary {
+    cursor: pointer;
+    font-weight: 700;
+    font-size: .95rem;
+  }
+  .mobile-filter-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  .mobile-filter-body fieldset {
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .mobile-filter-body legend {
+    margin-bottom: .45rem;
+    font-size: .85rem;
+    font-weight: 700;
+  }
+
+  @media (max-width: 1100px) {
+    .filter-sidebar { display: none; }
+    .mobile-filters { display: block; }
+  }
 </style>
