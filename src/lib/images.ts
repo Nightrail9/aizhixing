@@ -1,0 +1,14 @@
+import heroHome from '../assets/images/hero-home.png';
+import articleAgent from '../assets/images/article-agent-learning.png';
+import articlePlan from '../assets/images/article-learning-plan.png';
+import articleRag from '../assets/images/article-rag.png';
+import articleDeployment from '../assets/images/article-deployment.png';
+import tutorialPython from '../assets/images/tutorial-python.png';
+import tutorialLangchain from '../assets/images/tutorial-langchain.png';
+import paperAttention from '../assets/images/paper-attention.png';
+import paperFewShot from '../assets/images/paper-few-shot.png';
+import resourceProject from '../assets/images/resource-project.png';
+import resourceTool from '../assets/images/resource-tool.png';
+export const images={'hero-home':heroHome,'article-agent-learning':articleAgent,'article-learning-plan':articlePlan,'article-rag':articleRag,'article-deployment':articleDeployment,'tutorial-python':tutorialPython,'tutorial-langchain':tutorialLangchain,'paper-attention':paperAttention,'paper-few-shot':paperFewShot,'resource-project':resourceProject,'resource-tool':resourceTool} as const;
+export type ImageKey=keyof typeof images;
+export const imageFor=(key:string)=>images[key as ImageKey]??articleAgent;

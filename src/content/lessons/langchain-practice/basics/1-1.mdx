@@ -1,0 +1,42 @@
+---
+title: "1.1 了解 LangChain 及其应用场景"
+description: "认识模型、提示词、检索器与工具之间的职责边界。"
+publishedAt: 2026-08-24
+course: "langchain-practice"
+module: "basics"
+moduleTitle: "LangChain 基础"
+order: 1
+duration: 12
+tags: ["LangChain", "大模型"]
+draft: false
+---
+
+## 什么是 LangChain
+
+LangChain 为模型调用、提示词、检索与工具提供可组合的接口。它的价值不是隐藏所有细节，而是让组件边界更清楚。
+
+## 为什么选择组合式设计
+
+把一次调用拆成输入转换、模型推理和输出解析后，每一段都可以独立观察和替换。
+
+> 先理解数据怎样流过系统，再决定是否需要框架抽象。
+
+## 一个简单的示例
+
+```python
+from langchain_core.prompts import ChatPromptTemplate
+
+prompt = ChatPromptTemplate.from_template(
+    "请用三句话解释：{topic}"
+)
+```
+
+## 延伸：注意力的直觉
+
+对查询向量 $Q$、键 $K$ 与值 $V$，缩放点积注意力可以写为：
+
+$$
+\mathrm{Attention}(Q,K,V)=\mathrm{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
+$$
+
+公式不是使用框架的前提，但它提醒我们：模型输出来自输入表示之间的加权关系。

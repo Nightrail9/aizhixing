@@ -1,0 +1,38 @@
+{
+  "name": "aizhixing",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "check": "astro check",
+    "build": "astro build",
+    "build:search": "pagefind --site dist --force-language zh",
+    "build:full": "npm run check && npm run build && npm run build:search",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^5.0.6",
+    "@tailwindcss/vite": "^4.1.14",
+    "astro": "6.3.1",
+    "katex": "^0.16.22",
+    "lucide-astro": "^0.544.0",
+    "rehype-katex": "^7.0.1",
+    "remark-math": "^6.0.0",
+    "tailwindcss": "^4.1.14"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "pagefind": "^1.4.0",
+    "typescript": "^5.9.2",
+    "vite": "7.3.6"
+  },
+  "allowScripts": {
+    "esbuild": true,
+    "sharp": true
+  }
+}

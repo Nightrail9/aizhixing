@@ -1,0 +1,9 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import ResourceLayout from '../../../layouts/ResourceLayout.astro';
+import { publicOnly } from '../../../lib/content';
+export async function getStaticPaths(){return (await getCollection('resources')).filter((entry)=>publicOnly(entry)&&entry.data.kind==='tool').map((entry)=>({params:{slug:entry.id},props:{entry}}))}
+const { entry } = Astro.props as { entry: CollectionEntry<'resources'> };
+const { Content, headings } = await render(entry);
+---
+<ResourceLayout entry={entry} headings={headings}><Content/></ResourceLayout>

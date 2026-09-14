@@ -1,0 +1,8 @@
+---
+interface Item{label:string;value:string;count:number}
+const{title='分类导航',items}=Astro.props as {title?:string;items:Item[]};
+const total=items.reduce((sum,item)=>sum+item.count,0);
+---
+<aside class="sidebar surface"><h2>{title}</h2><div class="filter-list"><button class="filter-button" data-filter="all" aria-pressed="true">全部内容 <small>{total}</small></button>{items.map((item)=><button class="filter-button" data-filter={item.value} aria-pressed="false">{item.label} <small>{item.count}</small></button>)}</div></aside><details class="mobile-filters surface"><summary>{title}</summary><div class="filter-list"><button class="filter-button" data-filter="all" aria-pressed="true">全部内容 <small>{total}</small></button>{items.map((item)=><button class="filter-button" data-filter={item.value} aria-pressed="false">{item.label} <small>{item.count}</small></button>)}</div></details>
+<script>document.querySelectorAll<HTMLButtonElement>('[data-filter]').forEach((button)=>button.addEventListener('click',()=>{const value=button.dataset.filter||'all';document.querySelectorAll<HTMLButtonElement>('[data-filter]').forEach((item)=>item.setAttribute('aria-pressed',String(item.dataset.filter===value)));document.querySelectorAll<HTMLElement>('.listing-cards .content-card').forEach((card)=>{const values=(card.dataset.tags||'').split('|');card.hidden=value!=='all'&&!values.includes(value)})}));</script>
+<style>.filter-button{display:flex;justify-content:space-between;gap:1rem}.filter-button small{min-width:1.8rem;text-align:center;padding:.05rem .35rem;border-radius:999px;background:var(--surface-soft)}</style>

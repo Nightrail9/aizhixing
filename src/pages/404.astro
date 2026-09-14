@@ -1,0 +1,4 @@
+---
+import { ArrowLeft, Search } from 'lucide-astro';import BaseLayout from '../layouts/BaseLayout.astro';const base=import.meta.env.BASE_URL;
+---
+<BaseLayout title="页面未找到" description="你访问的页面不存在或已经移动。"><section class="not-found container"><div class="eyebrow">404 · LOST IN THE MOUNTAINS</div><h1>这条学习路径暂时不存在</h1><p class="muted">页面可能已经移动，回到首页继续探索，或搜索你需要的内容。</p><div><a class="btn btn-primary" href={base}><ArrowLeft size={17}/> 返回首页</a><a class="btn" href={`${base}search/`}><Search size={17}/> 搜索知识库</a></div></section></BaseLayout><style>.not-found{min-height:65vh;display:grid;place-content:center;text-align:center;max-width:760px}.not-found h1{font-size:clamp(2rem,5vw,4rem);line-height:1.15;margin:.4rem 0}.not-found div:last-child{display:flex;justify-content:center;gap:.7rem;margin-top:1rem;flex-wrap:wrap}</style>

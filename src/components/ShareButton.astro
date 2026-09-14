@@ -1,0 +1,6 @@
+---
+import { Share2 } from 'lucide-astro';
+---
+<button class="btn share-button" type="button"><Share2 size={17}/>分享</button><span class="share-status" role="status" aria-live="polite"></span>
+<script>document.querySelectorAll<HTMLButtonElement>('.share-button').forEach((button)=>button.addEventListener('click',async()=>{const payload={title:document.title,text:document.querySelector<HTMLMetaElement>('meta[name="description"]')?.content,url:location.href};const status=button.nextElementSibling;try{if(navigator.share)await navigator.share(payload);else{await navigator.clipboard.writeText(location.href);if(status)status.textContent='链接已复制'}}catch(error){if((error as Error).name!=='AbortError'&&status)status.textContent='请复制浏览器地址'}}));</script>
+<style>.share-status{margin-left:.5rem;color:var(--muted);font-size:.82rem}</style>

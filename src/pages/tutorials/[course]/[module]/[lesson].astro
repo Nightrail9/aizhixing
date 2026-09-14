@@ -1,0 +1,49 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import { CheckCircle2, ChevronLeft, ChevronRight, Clock3, ListChecks } from 'lucide-astro';
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import Giscus from '../../../../components/Giscus.astro';
+import ReadingProgress from '../../../../components/ReadingProgress.astro';
+import ShareButton from '../../../../components/ShareButton.astro';
+import { lessonHref, publicOnly } from '../../../../lib/content';
+
+export async function getStaticPaths(){
+  return (await getCollection('lessons')).filter(publicOnly).map((entry)=>({
+    params:{course:entry.data.course,module:entry.data.module,lesson:entry.id.split('/').at(-1)},
+    props:{entry},
+  }));
+}
+const { entry } = Astro.props as { entry: CollectionEntry<'lessons'> };
+const allLessons = (await getCollection('lessons')).filter(publicOnly).filter((lesson)=>lesson.data.course===entry.data.course).sort((a,b)=>a.data.order-b.data.order);
+const course = (await getCollection('courses')).find((item)=>item.id===entry.data.course);
+if (!course) throw new Error(`Course not found: ${entry.data.course}`);
+const currentIndex = allLessons.findIndex((lesson)=>lesson.id===entry.id);
+const previous = allLessons[currentIndex-1];
+const next = allLessons[currentIndex+1];
+const modules = [...new Set(allLessons.map((lesson)=>lesson.data.module))].map((module)=>({id:module,title:allLessons.find((lesson)=>lesson.data.module===module)?.data.moduleTitle ?? module,lessons:allLessons.filter((lesson)=>lesson.data.module===module)}));
+const { Content, headings } = await render(entry);
+const base = import.meta.env.BASE_URL;
+const progressKey = 'aizhixing:tutorial-progress:v1';
+---
+<BaseLayout title={`${entry.data.title} · ${course.data.title}`} description={entry.data.description}>
+  <ReadingProgress/>
+  <div class="container lesson-grid" data-pagefind-body>
+    <span class="sr-only" data-pagefind-filter="type:教程">教程</span><span class="sr-only" data-pagefind-filter={`category:${course.data.category}`}>{course.data.category}</span>
+    <aside class="course-nav surface" aria-label="课程章节">
+      <a class="course-back" href={`${base}tutorials/`}><ChevronLeft size={16}/> 返回课程</a><h2>{course.data.title}</h2>
+      <div class="course-progress"><span><ListChecks size={15}/> 学习进度</span><strong data-progress-label>0 / {allLessons.length}</strong></div><div class="progress-track"><span data-progress-bar></span></div>
+      {modules.map((group)=><section><h3>{group.title}</h3><ol>{group.lessons.map((lesson)=><li><a class:list={['lesson-link',{active:lesson.id===entry.id}]} href={lessonHref(lesson,base)} data-lesson-link={lesson.id}><span data-check>○</span>{lesson.data.title}</a></li>)}</ol></section>)}
+    </aside>
+    <article class="lesson-main">
+      <div class="eyebrow">{course.data.title} · {entry.data.moduleTitle}</div><h1 data-pagefind-meta="title">{entry.data.title}</h1><p class="muted" data-pagefind-meta="description">{entry.data.description}</p>
+      <div class="meta"><span><Clock3 size={16}/> 预计 {entry.data.duration} 分钟</span><span>第 {currentIndex+1} / {allLessons.length} 节</span></div>
+      <div class="lesson-actions"><ShareButton/><button class="btn btn-primary" type="button" data-complete><CheckCircle2 size={17}/><span>完成本节</span></button></div><div class="prose"><Content/></div>
+      <nav class="lesson-pagination" aria-label="上下节导航">{previous?<a class="surface" href={lessonHref(previous,base)}><small>上一节</small><span><ChevronLeft size={17}/>{previous.data.title}</span></a>:<span/>}{next?<a class="surface" href={lessonHref(next,base)} data-next><small>下一节</small><span>{next.data.title}<ChevronRight size={17}/></span></a>:<a class="surface" href={`${base}tutorials/`} data-next><small>课程完成</small><span>返回教程列表 <ChevronRight size={17}/></span></a>}</nav><Giscus/>
+    </article>
+    <aside class="toc lesson-toc" aria-label="本节目录"><h2>本节目录</h2><ol>{headings.filter((h)=>h.depth===2||h.depth===3).map((heading)=><li style={`padding-left:${(heading.depth-2)*.8}rem`}><a href={`#${heading.slug}`}>{heading.text}</a></li>)}</ol></aside>
+  </div>
+</BaseLayout>
+<script is:inline define:vars={{progressKey,courseId:entry.data.course,lessonId:entry.id,total:allLessons.length}}>
+  (()=>{let all={};try{all=JSON.parse(localStorage.getItem(progressKey)||'{}')}catch{all={}}const completed=new Set(Array.isArray(all[courseId])?all[courseId]:[]);const render=()=>{document.querySelectorAll('[data-lesson-link]').forEach((link)=>{const done=completed.has(link.getAttribute('data-lesson-link'));const check=link.querySelector('[data-check]');if(check)check.textContent=done?'✓':'○'});const label=document.querySelector('[data-progress-label]');if(label)label.textContent=`${completed.size} / ${total}`;const bar=document.querySelector('[data-progress-bar]');if(bar)bar.style.width=`${Math.min(100,completed.size/total*100)}%`;const button=document.querySelector('[data-complete]');if(button){const done=completed.has(lessonId);button.classList.toggle('is-done',done);const text=button.querySelector('span');if(text)text.textContent=done?'已完成':'完成本节'}};const save=()=>{all[courseId]=[...completed];localStorage.setItem(progressKey,JSON.stringify(all));render()};document.querySelector('[data-complete]')?.addEventListener('click',()=>{completed.add(lessonId);save()});document.querySelectorAll('[data-next]').forEach((link)=>link.addEventListener('click',()=>{completed.add(lessonId);all[courseId]=[...completed];localStorage.setItem(progressKey,JSON.stringify(all))}));render()})();
+</script>
+<style>.lesson-grid{display:grid;grid-template-columns:255px minmax(0,760px) 220px;gap:1.5rem;align-items:start;padding-block:1.4rem 4rem}.course-nav{position:sticky;top:6rem;padding:1rem;max-height:calc(100vh - 7rem);overflow:auto}.course-back{display:inline-flex;align-items:center;color:#0875ed;font-size:.82rem;font-weight:750}.course-nav h2{margin:.7rem 0;font-size:1rem;line-height:1.4}.course-progress{display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:.75rem}.course-progress span{display:inline-flex;align-items:center;gap:.3rem}.progress-track{height:6px;margin:.45rem 0 1rem;border-radius:99px;background:var(--surface-soft);overflow:hidden}.progress-track span{display:block;height:100%;width:0;background:#1687ff;transition:width .25s}.course-nav section h3{margin:1rem 0 .35rem;font-size:.78rem;color:var(--muted)}.course-nav ol{list-style:none;margin:0;padding:0;display:grid;gap:.2rem}.lesson-link{display:grid;grid-template-columns:1rem 1fr;gap:.4rem;padding:.48rem;border-radius:.55rem;color:var(--muted);font-size:.78rem;line-height:1.45}.lesson-link.active,.lesson-link:hover{background:var(--surface-soft);color:#0875ed}.lesson-main{min-width:0}.lesson-main h1{font-size:clamp(2rem,4vw,3rem);line-height:1.2;margin:.45rem 0}.lesson-main>.muted{font-size:1.05rem}.meta span{display:inline-flex;align-items:center;gap:.3rem}.lesson-actions{display:flex;gap:.7rem;margin:1rem 0 1.4rem}.is-done{background:#0a9c72}.lesson-pagination{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-top:2rem}.lesson-pagination a{padding:.85rem}.lesson-pagination small{display:block;color:var(--muted)}.lesson-pagination span{display:flex;align-items:center;justify-content:space-between;font-weight:750}.lesson-pagination a:last-child{text-align:right}.lesson-toc{top:6rem}.lesson-toc h2{margin-top:0}@media(max-width:1180px){.lesson-grid{grid-template-columns:230px minmax(0,1fr)}.lesson-toc{grid-column:2;position:static;grid-row:1}.lesson-main{grid-column:2}}@media(max-width:800px){.lesson-grid{grid-template-columns:1fr}.course-nav,.lesson-main,.lesson-toc{grid-column:1}.course-nav{position:static;max-height:none}.lesson-toc{grid-row:auto}.lesson-pagination{grid-template-columns:1fr}}</style>

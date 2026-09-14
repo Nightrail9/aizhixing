@@ -1,0 +1,6 @@
+---
+import { Picture } from 'astro:assets';
+type Props = Parameters<typeof Picture>[0];
+const props = Astro.props as Props;
+---
+<Picture {...props} formats={['avif']} fallbackFormat="webp"/>
