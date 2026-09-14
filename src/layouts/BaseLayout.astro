@@ -3,9 +3,34 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import '../styles/global.css';
 import { siteConfig } from '../site.config';
-interface Props{title?:string;description?:string}
-const{title,description=siteConfig.description}=Astro.props;
-const pageTitle=title?`${title} · ${siteConfig.name}`:`${siteConfig.name} · ${siteConfig.tagline}`;
-const canonical=new URL(Astro.url.pathname,Astro.site);
+interface Props { title?: string; description?: string }
+const { title, description = siteConfig.description } = Astro.props;
+const pageTitle = title ? `${title} · ${siteConfig.name}` : `${siteConfig.name} · ${siteConfig.tagline}`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
-<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width"/><meta name="generator" content={Astro.generator}/><meta name="description" content={description}/><meta name="theme-color" content="#0875ed"/><link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL}favicon.svg`}/><link rel="canonical" href={canonical}/><meta property="og:type" content="website"/><meta property="og:locale" content="zh_CN"/><meta property="og:title" content={pageTitle}/><meta property="og:description" content={description}/><meta property="og:url" content={canonical}/><title>{pageTitle}</title><script is:inline>(()=>{const saved=localStorage.getItem('aizhixing:theme:v1');const dark=saved?saved==='dark':matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('dark',dark)})()</script></head><body><Header/><main><slot/></main><Footer/></body></html>
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><meta name="generator" content={Astro.generator} /><meta name="description" content={description} /><meta name="theme-color" content="#0875ed" />
+    <link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL}favicon.svg`} /><link rel="canonical" href={canonical} />
+    <meta property="og:type" content="website" /><meta property="og:locale" content="zh_CN" /><meta property="og:title" content={pageTitle} /><meta property="og:description" content={description} /><meta property="og:url" content={canonical} /><title>{pageTitle}</title>
+    <script is:inline>(() => { const saved = localStorage.getItem('aizhixing:theme:v1'); const dark = saved ? saved === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; document.documentElement.classList.toggle('dark', dark); })();</script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">跳到主要内容</a><Header /><main id="main-content"><slot /></main><Footer />
+    <script>
+      document.querySelectorAll<HTMLElement>('.prose pre').forEach((pre) => {
+        if (pre.parentElement?.classList.contains('code-block')) return;
+        const wrapper = document.createElement('div'); wrapper.className = 'code-block'; pre.before(wrapper); wrapper.append(pre);
+        const toolbar = document.createElement('div'); toolbar.className = 'code-toolbar';
+        const language = pre.dataset.language || pre.querySelector('code')?.className.match(/language-([^\s]+)/)?.[1] || 'code';
+        toolbar.innerHTML = `<span>${language}</span><button type="button" aria-label="复制代码">复制</button>`; wrapper.prepend(toolbar);
+        toolbar.querySelector('button')?.addEventListener('click', async (event) => {
+          const button = event.currentTarget as HTMLButtonElement;
+          try { await navigator.clipboard.writeText(pre.textContent || ''); button.textContent = '已复制'; } catch { button.textContent = '复制失败'; }
+          setTimeout(() => { button.textContent = '复制'; }, 1600);
+        });
+      });
+    </script>
+  </body>
+</html>

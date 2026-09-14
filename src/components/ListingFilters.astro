@@ -1,8 +1,100 @@
 ---
-interface Item{label:string;value:string;count:number}
-const{title='分类导航',items}=Astro.props as {title?:string;items:Item[]};
-const total=items.reduce((sum,item)=>sum+item.count,0);
+import { CalendarDays, LayoutGrid, Tags } from 'lucide-astro';
+
+interface Item { label: string; value: string; count: number }
+interface Group { id: 'category' | 'tag' | 'year'; title: string; allLabel: string; items: Item[] }
+const { groups } = Astro.props as { groups: Group[] };
+const icons = { category: LayoutGrid, tag: Tags, year: CalendarDays };
 ---
-<aside class="sidebar surface"><h2>{title}</h2><div class="filter-list"><button class="filter-button" data-filter="all" aria-pressed="true">全部内容 <small>{total}</small></button>{items.map((item)=><button class="filter-button" data-filter={item.value} aria-pressed="false">{item.label} <small>{item.count}</small></button>)}</div></aside><details class="mobile-filters surface"><summary>{title}</summary><div class="filter-list"><button class="filter-button" data-filter="all" aria-pressed="true">全部内容 <small>{total}</small></button>{items.map((item)=><button class="filter-button" data-filter={item.value} aria-pressed="false">{item.label} <small>{item.count}</small></button>)}</div></details>
-<script>document.querySelectorAll<HTMLButtonElement>('[data-filter]').forEach((button)=>button.addEventListener('click',()=>{const value=button.dataset.filter||'all';document.querySelectorAll<HTMLButtonElement>('[data-filter]').forEach((item)=>item.setAttribute('aria-pressed',String(item.dataset.filter===value)));document.querySelectorAll<HTMLElement>('.listing-cards .content-card').forEach((card)=>{const values=(card.dataset.tags||'').split('|');card.hidden=value!=='all'&&!values.includes(value)})}));</script>
-<style>.filter-button{display:flex;justify-content:space-between;gap:1rem}.filter-button small{min-width:1.8rem;text-align:center;padding:.05rem .35rem;border-radius:999px;background:var(--surface-soft)}</style>
+
+<aside class="filter-sidebar" aria-label="内容筛选">
+  {groups.map((group) => {
+    const Icon = icons[group.id];
+    const total = group.id === 'category' ? group.items.reduce((sum, item) => sum + item.count, 0) : undefined;
+    return <section class="filter-panel surface">
+      <h2><Icon size={18} />{group.title}</h2>
+      <div class:list={['filter-list', { 'filter-tags': group.id === 'tag' }]}>
+        <button class="filter-button" data-filter-group={group.id} data-filter-value="all" aria-pressed="true"><span>{group.allLabel}</span>{total !== undefined && <small>{total}</small>}</button>
+        {group.items.map((item) => <button class="filter-button" data-filter-group={group.id} data-filter-value={item.value} aria-pressed="false"><span>{item.label}</span><small>{item.count}</small></button>)}
+      </div>
+    </section>;
+  })}
+</aside>
+
+<details class="mobile-filters surface">
+  <summary>筛选内容</summary>
+  <div class="mobile-filter-body">
+    {groups.map((group) => <fieldset><legend>{group.title}</legend><div class="filter-list filter-tags"><button class="filter-button" data-filter-group={group.id} data-filter-value="all" aria-pressed="true"><span>{group.allLabel}</span></button>{group.items.map((item) => <button class="filter-button" data-filter-group={group.id} data-filter-value={item.value} aria-pressed="false"><span>{item.label}</span><small>{item.count}</small></button>)}</div></fieldset>)}
+  </div>
+</details>
+
+<script>
+  (() => {
+    const state: Record<string, string> = { category: 'all', tag: 'all', year: 'all' };
+    const cards = [...document.querySelectorAll<HTMLElement>('.listing-cards > .content-card')];
+    const container = document.querySelector<HTMLElement>('.listing-cards');
+    const empty = document.querySelector<HTMLElement>('[data-listing-empty]');
+    const pageSize = 10;
+    let page = 1;
+    let sortMode = 'latest';
+
+    const matches = (card: HTMLElement) => {
+      const tags = (card.dataset.tags || '').split('|');
+      return (state.category === 'all' || card.dataset.category === state.category)
+        && (state.tag === 'all' || tags.includes(state.tag))
+        && (state.year === 'all' || card.dataset.year === state.year);
+    };
+    const compare = (a: HTMLElement, b: HTMLElement) => {
+      if (sortMode === 'popular') return Number(b.dataset.popularity || 0) - Number(a.dataset.popularity || 0) || Number(b.dataset.date || 0) - Number(a.dataset.date || 0);
+      if (sortMode === 'featured') return Number(b.dataset.featured || 0) - Number(a.dataset.featured || 0) || Number(b.dataset.date || 0) - Number(a.dataset.date || 0);
+      return Number(b.dataset.date || 0) - Number(a.dataset.date || 0);
+    };
+    const render = () => {
+      const visible = cards.filter(matches).sort(compare);
+      visible.forEach((card) => container?.append(card));
+      const pages = Math.ceil(visible.length / pageSize);
+      page = Math.min(Math.max(1, page), Math.max(1, pages));
+      cards.forEach((card) => { card.hidden = true; card.classList.remove('is-leading'); });
+      visible.slice((page - 1) * pageSize, page * pageSize).forEach((card, index) => { card.hidden = false; card.classList.toggle('is-leading', index === 0); });
+      if (empty) empty.hidden = visible.length > 0;
+      const pager = document.querySelector<HTMLElement>('[data-pagination]');
+      if (pager) {
+        pager.hidden = pages <= 1;
+        const label = pager.querySelector<HTMLElement>('[data-page-label]'); if (label) label.textContent = `${page} / ${pages}`;
+        pager.querySelector<HTMLButtonElement>('[data-page-prev]')!.disabled = page <= 1;
+        pager.querySelector<HTMLButtonElement>('[data-page-next]')!.disabled = page >= pages;
+      }
+    };
+    document.querySelectorAll<HTMLButtonElement>('[data-filter-group]').forEach((button) => button.addEventListener('click', () => {
+      const group = button.dataset.filterGroup || 'category'; state[group] = button.dataset.filterValue || 'all'; page = 1;
+      document.querySelectorAll<HTMLButtonElement>(`[data-filter-group="${group}"]`).forEach((item) => item.setAttribute('aria-pressed', String(item.dataset.filterValue === state[group])));
+      render();
+    }));
+    document.querySelectorAll<HTMLButtonElement>('[data-sort-mode]').forEach((button) => button.addEventListener('click', () => {
+      sortMode = button.dataset.sortMode || 'latest'; page = 1;
+      document.querySelectorAll<HTMLButtonElement>('[data-sort-mode]').forEach((item) => item.setAttribute('aria-pressed', String(item === button))); render();
+    }));
+    document.querySelector<HTMLButtonElement>('[data-page-prev]')?.addEventListener('click', () => { page -= 1; render(); });
+    document.querySelector<HTMLButtonElement>('[data-page-next]')?.addEventListener('click', () => { page += 1; render(); });
+    render();
+  })();
+</script>
+
+<style>
+  .filter-sidebar { display: grid; align-self: start; gap: .8rem; position: sticky; top: 5.45rem; }
+  .filter-panel { padding: 1rem; }
+  .filter-panel h2 { display: flex; align-items: center; gap: .55rem; margin: 0 0 .7rem; font-size: 1rem; }
+  .filter-list { display: grid; gap: .18rem; }
+  .filter-button { width: 100%; min-height: 2.35rem; display: flex; align-items: center; justify-content: space-between; gap: .7rem; padding: .45rem .7rem; border: 0; border-radius: .55rem; background: transparent; color: var(--muted); text-align: left; font-size: .82rem; font-weight: 650; cursor: pointer; }
+  .filter-button:hover, .filter-button[aria-pressed='true'] { color: var(--brand); background: var(--brand-soft); }
+  .filter-button small { min-width: 1.7rem; padding: .05rem .4rem; border-radius: 99px; background: var(--page); text-align: center; }
+  .filter-tags { display: flex; flex-wrap: wrap; gap: .35rem; }
+  .filter-tags .filter-button { width: auto; min-height: 1.85rem; gap: .35rem; padding: .26rem .58rem; border-radius: 99px; background: var(--brand-soft); }
+  .filter-tags .filter-button:first-child { width: 100%; border-radius: .55rem; background: transparent; }
+  .mobile-filters { display: none; padding: .7rem .9rem; }
+  .mobile-filters summary { cursor: pointer; font-weight: 800; }
+  .mobile-filter-body { display: grid; gap: .8rem; margin-top: .7rem; }
+  .mobile-filter-body fieldset { margin: 0; padding: 0; border: 0; }
+  .mobile-filter-body legend { margin-bottom: .35rem; font-size: .78rem; font-weight: 800; }
+  @media (max-width: 1100px) { .filter-sidebar { display: none; } .mobile-filters { display: block; } }
+</style>

@@ -1,22 +1,98 @@
 ---
 import { getCollection } from 'astro:content';
+import { ArrowRight, BookOpen, Code2, FileText } from 'lucide-astro';
 import Image from '../components/ResponsiveImage.astro';
-import { ArrowRight, Code2, FileText } from 'lucide-astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { images, imageFor } from '../lib/images';
 import { articleHref, byDateDesc, formatDate, publicOnly, resourceHref } from '../lib/content';
-const base=import.meta.env.BASE_URL;
-const articles=(await getCollection('articles')).filter(publicOnly).sort(byDateDesc);
-const courses=(await getCollection('courses')).filter(publicOnly).sort(byDateDesc);
-const resources=(await getCollection('resources')).filter(publicOnly).sort(byDateDesc);
-const featured=articles.find((entry)=>entry.data.featured)??articles[0];
+
+const base = import.meta.env.BASE_URL;
+const articles = (await getCollection('articles')).filter(publicOnly).sort(byDateDesc);
+const courses = (await getCollection('courses')).filter(publicOnly).sort(byDateDesc);
+const lessons = (await getCollection('lessons')).filter(publicOnly);
+const resources = (await getCollection('resources')).filter(publicOnly).sort(byDateDesc);
+const featured = articles.find((entry) => entry.data.featured) ?? articles[0];
+const secondaryArticles = articles.filter((entry) => entry.id !== featured?.id).slice(0, 3);
 ---
 <BaseLayout>
-  <section class="home-hero"><Image src={images['hero-home']} alt="雪山湖畔的学习桌" widths={[900,1440,1920]} sizes="100vw" loading="eager"/><div class="container hero-inner"><div class="hero-copy"><p class="eyebrow">AI LEARNING · A BRIGHTER YOU</p><h1>与 <span>AI</span> 一起，<br/>探索更大的可能</h1><p>记录我在人工智能领域的学习思考、实践经验与优质资源，从入门到进阶，一起构建属于自己的技术世界。</p><a class="btn btn-primary" href={`${base}articles/`}>开始探索 <ArrowRight size={18}/></a></div></div></section>
-  <div class="container home-sections">
-    <section class="surface feature-section"><div class="section-head"><div><span class="eyebrow">LATEST STORIES</span><h2 class="section-title">最新文章</h2></div><a class="text-link" href={`${base}articles/`}>查看全部 →</a></div>{featured&&<div class="featured-row"><a class="featured-image" href={articleHref(featured,base)}><Image src={imageFor(featured.data.cover)} alt={featured.data.coverAlt} widths={[640,960]} sizes="(max-width: 760px) 100vw, 55vw"/></a><div><span class="pill">置顶推荐</span><h3><a href={articleHref(featured,base)}>{featured.data.title}</a></h3><p>{featured.data.description}</p><div class="meta">{formatDate(featured.data.publishedAt)} · {featured.data.views?.toLocaleString()} 阅读</div><div class="tag-row">{featured.data.tags.map((tag)=><span class="pill">{tag}</span>)}</div></div></div>}<div class="mini-grid">{articles.filter((entry)=>entry.id!==featured?.id).slice(0,3).map((entry)=><a class="mini-item" href={articleHref(entry,base)}><Image src={imageFor(entry.data.cover)} alt={entry.data.coverAlt} width={144}/><span><strong>{entry.data.title}</strong><small>{formatDate(entry.data.publishedAt)}</small></span><ArrowRight size={17}/></a>)}</div></section>
-    <section><div class="section-head"><div><span class="eyebrow">LEARNING PATHS</span><h2 class="section-title">热门教程</h2></div><a class="text-link" href={`${base}tutorials/`}>查看全部 →</a></div><div class="course-grid">{courses.map((course)=><a class="course-tile surface" href={`${base}tutorials/${course.id}/basics/1-1/`}><Image src={imageFor(course.data.cover)} alt={course.data.coverAlt} widths={[480,720]} sizes="(max-width: 760px) 100vw, 50vw"/><div><span class="pill">{course.data.level}</span><h3>{course.data.title}</h3><p>{course.data.description}</p><strong>3 节课程 →</strong></div></a>)}</div></section>
-    <section class="resource-panels"><div class="surface compact-panel"><div class="section-head"><h2 class="section-title"><FileText size={22}/>论文推荐</h2><a class="text-link" href={`${base}resources/`}>更多 →</a></div>{resources.filter((r)=>r.data.kind==='paper').map((entry)=><a class="resource-line" href={resourceHref(entry,base)}><FileText size={19}/><span><strong>{entry.data.title}</strong><small>{entry.data.description}</small></span><ArrowRight size={17}/></a>)}</div><div class="surface compact-panel"><div class="section-head"><h2 class="section-title"><Code2 size={22}/>开源项目</h2><a class="text-link" href={`${base}resources/`}>更多 →</a></div>{resources.filter((r)=>r.data.kind==='project').map((entry)=><a class="resource-line" href={resourceHref(entry,base)}><Code2 size={19}/><span><strong>{entry.data.title}</strong><small>{entry.data.description}</small></span><ArrowRight size={17}/></a>)}</div></section>
+  <section class="home-hero">
+    <Image src={images['hero-home']} alt="雪山湖畔的学习桌" widths={[760, 1200, 1920]} sizes="100vw" loading="eager" />
+    <div class="hero-veil"></div>
+    <div class="container hero-inner">
+      <div class="hero-copy"><p class="eyebrow">AI LEARNING · A BRIGHTER YOU</p><h1>与 <span>AI</span> 一起，<br />探索更大的可能</h1><p>记录我在人工智能领域的学习思考、实践经验与优质资源，从入门到进阶，和你一起构建属于自己的技术世界。</p><a class="btn btn-primary" href={`${base}articles/`}>开始探索 <ArrowRight size={17} /></a></div>
+      <p class="hero-note">持续学习，<br />让 AI 帮我们看见更大的世界。</p>
+    </div>
+  </section>
+
+  <div class="container home-content">
+    <section class="home-latest surface">
+      <div class="section-head"><h2 class="section-title">最新文章</h2><a class="text-link" href={`${base}articles/`}>查看更多 →</a></div>
+      <div class="latest-grid">
+        {featured && <article class="featured-story"><a href={articleHref(featured, base)}><Image src={imageFor(featured.data.cover)} alt={featured.data.coverAlt} widths={[480, 760]} sizes="(max-width: 760px) 100vw, 40vw" /><span class="pill">{featured.data.category}</span></a><div><h3><a href={articleHref(featured, base)}>{featured.data.title}</a></h3><p>{featured.data.description}</p><div class="meta">{formatDate(featured.data.publishedAt)} · {featured.data.views?.toLocaleString()} 阅读</div></div></article>}
+        <div class="story-list">{secondaryArticles.map((entry) => <a class="story-row" href={articleHref(entry, base)}><Image src={imageFor(entry.data.cover)} alt={entry.data.coverAlt} width={144} /><span><strong>{entry.data.title}</strong><small>{formatDate(entry.data.publishedAt)} · {entry.data.views?.toLocaleString()} 阅读</small></span><ArrowRight size={16} /></a>)}</div>
+      </div>
+    </section>
+
+    <section class="home-courses surface">
+      <div class="section-head"><h2 class="section-title">热门教程</h2><a class="text-link" href={`${base}tutorials/`}>查看更多 →</a></div>
+      <div class="course-list">{courses.map((course) => { const count = lessons.filter((lesson) => lesson.data.course === course.id).length; return <a class="course-card" href={`${base}tutorials/${course.id}/basics/1-1/`}><Image src={imageFor(course.data.cover)} alt={course.data.coverAlt} widths={[240, 420]} sizes="(max-width: 760px) 40vw, 18vw" /><div><span class="pill">{course.data.level}</span><h3>{course.data.title}</h3><p>{course.data.description}</p><strong>{count} 节课程 →</strong></div></a>; })}</div>
+    </section>
+
+    <section class="home-resources surface">
+      <div class="section-head"><h2 class="section-title"><FileText size={20} />论文推荐</h2><a class="text-link" href={`${base}resources/`}>查看更多 →</a></div>
+      {resources.filter((entry) => entry.data.kind === 'paper').map((entry) => <a class="resource-row" href={resourceHref(entry, base)}><FileText size={18} /><span><strong>{entry.data.title}</strong><small>{entry.data.description}</small></span><ArrowRight size={16} /></a>)}
+    </section>
+    <section class="home-resources surface">
+      <div class="section-head"><h2 class="section-title"><Code2 size={20} />开源项目推荐</h2><a class="text-link" href={`${base}resources/`}>查看更多 →</a></div>
+      {resources.filter((entry) => entry.data.kind === 'project').map((entry) => <a class="resource-row" href={resourceHref(entry, base)}><BookOpen size={18} /><span><strong>{entry.data.title}</strong><small>{entry.data.description}</small></span><ArrowRight size={16} /></a>)}
+    </section>
   </div>
 </BaseLayout>
-<style>.home-hero{position:relative;min-height:34rem;overflow:hidden}.home-hero>:global(img){position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.home-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(244,250,255,.98) 0%,rgba(244,250,255,.86) 34%,rgba(244,250,255,.08) 66%)}.dark .home-hero::after{background:linear-gradient(90deg,rgba(7,18,38,.98),rgba(7,18,38,.82) 35%,rgba(7,18,38,.05) 70%)}.hero-inner{position:relative;z-index:2;display:flex;align-items:center;min-height:34rem}.hero-copy{max-width:38rem}.hero-copy h1{margin:.45rem 0 1rem;font-size:clamp(2.6rem,5vw,5rem);line-height:1.05;letter-spacing:-.055em}.hero-copy h1 span{color:#0875ed}.hero-copy>p:not(.eyebrow){max-width:34rem;color:var(--muted);font-size:1.08rem}.hero-copy .btn{margin-top:1rem}.home-sections{display:grid;gap:1.4rem;padding-block:1.4rem 2rem}.feature-section,.compact-panel{padding:1.15rem}.featured-row{display:grid;grid-template-columns:minmax(260px,.9fr) 1.1fr;gap:1.2rem;align-items:center}.featured-image :global(img){width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:.8rem}.featured-row h3{font-size:1.45rem;line-height:1.35;margin:.65rem 0}.featured-row p{color:var(--muted)}.mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem;margin-top:1rem}.mini-item{display:grid;grid-template-columns:86px 1fr auto;align-items:center;gap:.7rem;padding:.55rem;border:1px solid var(--line);border-radius:.75rem}.mini-item :global(img){width:86px;height:60px;object-fit:cover;border-radius:.5rem}.mini-item span{display:grid;line-height:1.35}.mini-item strong{font-size:.83rem}.mini-item small{color:var(--muted);margin-top:.3rem}.course-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}.course-tile{display:grid;grid-template-columns:200px 1fr;overflow:hidden}.course-tile :global(img){width:100%;height:100%;object-fit:cover}.course-tile>div{padding:1rem}.course-tile h3{margin:.5rem 0}.course-tile p{color:var(--muted);font-size:.88rem}.course-tile strong{color:#0875ed;font-size:.85rem}.resource-panels{display:grid;grid-template-columns:1fr 1fr;gap:1rem}.section-title{display:flex;align-items:center;gap:.5rem}.resource-line{display:grid;grid-template-columns:auto 1fr auto;gap:.8rem;align-items:center;padding:.75rem 0;border-top:1px solid var(--line)}.resource-line span{display:grid}.resource-line small{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:36rem}@media(max-width:900px){.mini-grid{grid-template-columns:1fr}.course-tile{grid-template-columns:150px 1fr}.resource-panels{grid-template-columns:1fr}}@media(max-width:640px){.home-hero,.hero-inner{min-height:30rem}.home-hero::after{background:color-mix(in srgb,var(--surface) 78%,transparent)}.hero-copy h1{font-size:2.65rem}.featured-row,.course-grid,.course-tile{grid-template-columns:1fr}.course-tile :global(img){aspect-ratio:16/9}.mini-item{grid-template-columns:72px 1fr auto}.resource-line small{max-width:15rem}}</style>
+
+<style>
+  .home-hero { position: relative; height: 20.5rem; overflow: hidden; }
+  .home-hero > :global(picture), .home-hero > :global(picture img) { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .home-hero > :global(picture img) { object-fit: cover; }
+  .hero-veil { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(248,252,255,.98), rgba(248,252,255,.84) 32%, rgba(248,252,255,.05) 67%); }
+  .dark .hero-veil { background: linear-gradient(90deg, rgba(7,18,38,.98), rgba(7,18,38,.8) 35%, rgba(7,18,38,.08) 72%); }
+  .hero-inner { position: relative; z-index: 2; height: 100%; display: flex; align-items: center; justify-content: space-between; }
+  .hero-copy { max-width: 34rem; }
+  .hero-copy h1 { margin: .25rem 0 .55rem; font-size: clamp(2.65rem, 4.7vw, 4.1rem); line-height: 1.03; letter-spacing: -.055em; }
+  .hero-copy h1 span { color: var(--brand); }
+  .hero-copy > p:not(.eyebrow) { max-width: 31rem; margin: 0; color: var(--muted); font-size: .92rem; }
+  .hero-copy .btn { margin-top: .75rem; min-width: 8.5rem; }
+  .hero-note { align-self: flex-start; margin: 2.6rem 13% 0 0; color: #0b59d8; font-family: 'KaiTi', 'STKaiti', cursive; font-size: 1.18rem; line-height: 1.7; transform: rotate(-7deg); }
+  .home-content { display: grid; grid-template-columns: minmax(0, 2fr) minmax(310px, 1fr); gap: .75rem; padding-block: .75rem 1.4rem; }
+  .home-latest, .home-courses, .home-resources { padding: .9rem 1rem; }
+  .latest-grid { display: grid; grid-template-columns: 1.1fr .95fr; gap: .75rem; }
+  .featured-story { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: .62rem; }
+  .featured-story > a { position: relative; display: block; }
+  .featured-story :global(img) { display: block; width: 100%; aspect-ratio: 16 / 7; object-fit: cover; }
+  .featured-story > a .pill { position: absolute; left: .7rem; top: .65rem; }
+  .featured-story > div { padding: .55rem .7rem .65rem; }
+  .featured-story h3 { margin: 0; font-size: .98rem; line-height: 1.4; }
+  .featured-story p { margin: .22rem 0; color: var(--muted); font-size: .72rem; line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .story-list { display: grid; gap: .5rem; }
+  .story-row { min-width: 0; display: grid; grid-template-columns: 94px minmax(0, 1fr) auto; align-items: center; gap: .65rem; padding: .34rem; border: 1px solid var(--line); border-radius: .55rem; }
+  .story-row :global(img) { display: block; width: 94px; height: 58px; object-fit: cover; border-radius: .4rem; }
+  .story-row span { min-width: 0; display: grid; }
+  .story-row strong { font-size: .78rem; line-height: 1.4; }
+  .story-row small { margin-top: .2rem; color: var(--muted); font-size: .66rem; }
+  .story-row > :global(svg) { color: var(--brand); }
+  .course-list { display: grid; grid-template-columns: 1fr 1fr; gap: .55rem; }
+  .course-card { min-width: 0; overflow: hidden; display: grid; grid-template-rows: 7rem 1fr; border: 1px solid var(--line); border-radius: .6rem; }
+  .course-card :global(img) { width: 100%; height: 7rem; object-fit: cover; }
+  .course-card > div { padding: .55rem .65rem; }
+  .course-card h3 { margin: .3rem 0; font-size: .82rem; line-height: 1.35; }
+  .course-card p { margin: 0 0 .35rem; color: var(--muted); font-size: .68rem; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .course-card strong { color: var(--brand); font-size: .7rem; }
+  .home-resources { min-width: 0; }
+  .home-resources .section-title { display: inline-flex; align-items: center; gap: .45rem; }
+  .resource-row { min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .7rem; padding: .52rem .35rem; border-top: 1px solid var(--line); }
+  .resource-row > :global(svg) { color: var(--brand); }
+  .resource-row span { min-width: 0; display: grid; }
+  .resource-row strong { font-size: .76rem; }
+  .resource-row small { color: var(--muted); font-size: .66rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  @media (max-width: 1050px) { .home-content { grid-template-columns: 1fr; } .home-latest { grid-column: auto; } .course-card { grid-template-columns: 150px 1fr; grid-template-rows: 1fr; } .course-card :global(img) { height: 100%; min-height: 8rem; } }
+  @media (max-width: 700px) { .home-hero { height: 28rem; } .hero-veil { background: color-mix(in srgb, var(--surface-solid) 78%, transparent); } .hero-copy h1 { font-size: 2.7rem; } .hero-note { display: none; } .home-content { gap: .6rem; padding-top: .6rem; } .latest-grid, .course-list { grid-template-columns: 1fr; } .featured-story :global(img) { aspect-ratio: 16 / 9; } .course-card { grid-template-columns: 115px 1fr; } .course-card :global(img) { min-height: 7.5rem; } }
+</style>
